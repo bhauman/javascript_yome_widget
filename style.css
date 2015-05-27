@@ -1,4 +1,14 @@
-svg line {
+body {
+    background-color: rgb(24,26,38);
+    color: white;
+}
+
+svg line,
+svg polygon {
    stroke: #2997ab;
    stroke-width: 2;   
+}
+
+svg polygon {
+    fill: transparent;
 }
