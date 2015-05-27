@@ -1,0 +1,4 @@
+.module-cache
+\#*
+\.\#*
+build/*
