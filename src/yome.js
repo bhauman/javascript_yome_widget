@@ -20,11 +20,11 @@ function l(x) { console.log(x);  return x; }
 
 var Yome = Yome || {};
 
-Yome.initialState = { sides: [1,2,3,4,5,6,7,8].map(() => {}) }
+Yome.initialState = { sides: [1,2,3,4,5,6,7,8].map(function(x) {return {}})}
 
 Yome.state = Yome.state || Yome.initialState;
 
-Yome.swap = f => { Yome.state = f(Yome.state); Yome.render(); }
+Yome.swap = (st, f) => { f(st); Yome.render(); }
 
 Yome.sideCount = st => st.sides.length
 
@@ -38,7 +38,8 @@ Yome.rotate = (theta, point) => {
            y: (point.x * sint) + (point.y * cost) };
 }
 
-Yome.radialPoint = (radius, theta) => Yome.rotate(theta, {x: 0, y: radius})
+Yome.radialPoint = (radius, theta) =>
+  Yome.rotate(theta, {x: 0, y: radius})
 
 // dont' actually need this yet
 Yome.radialLine = function(radius, start_theta, end_theta) {
@@ -47,29 +48,32 @@ Yome.radialLine = function(radius, start_theta, end_theta) {
   return <line x1={start_p.x} y1={start_p.y} x2={end_p.x} y2={end_p.y}></line>;
 }
 
-Yome.pointsToPointsString = points => points.map(p => `${p.x},${p.y}`).join(" ")
-
-Yome.polygon = points => <polygon points={ Yome.pointsToPointsString(points) }></polygon>
-
 Yome.sidePoints = st =>
   st.sides.map((_,i) => Yome.radialPoint(180, i * Yome.sliceTheta(st)))
 
-Yome.preventValueHandler = f => (e => {e.preventDefault(); f(e.target.value)})
+Yome.pointsToPointsString = points =>
+  points.map(p => `${p.x},${p.y}`).join(" ")
 
-Yome.sideCountChange = new_count => {
-  Yome.swap( st => {
+Yome.polygon = points =>
+  <polygon points={ Yome.pointsToPointsString(points) }></polygon>
+
+Yome.preventValueHandler = (state, f) =>
+  (e => {e.preventDefault(); f(state, e.target.value)})
+
+Yome.sideCountChange = (state, new_count) => {
+  Yome.swap(state, st => {
     let nArray = Array.apply(null, Array(parseInt(new_count)));
     st.sides = nArray.map((_,i) => st.sides[i] || {});
-    return st;
   });
 }
 
-Yome.sideCountChangeHandler = Yome.preventValueHandler(Yome.sideCountChange);
+Yome.sideCountChangeHandler = (state) =>
+  Yome.preventValueHandler(state, Yome.sideCountChange);
 
 Yome.sideCountInput = st => 
   <div className="form-control">
-  <label>Number of Sides</label>
-    <select onChange={ Yome.sideCountChangeHandler }>
+    <div>Number of Sides</div>
+  <select onChange={ Yome.sideCountChangeHandler(st) }>
       { ["HexaYome", "SeptaYome", "OctaYome"].map(
            (l, v) => <option value={v + 6}>{l}</option>
         ) } 
