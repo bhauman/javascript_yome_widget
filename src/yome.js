@@ -22,11 +22,11 @@ var Yome = Yome || {};
 
 Yome.initialState = { sides: [1,2,3,4,5,6,7,8].map(function(x) {return {}})}
 
-Yome.sideCount = st => st.sides.length
+Yome.sideCount = (st) => st.sides.length
 
-Yome.sliceTheta = st => 2 * Math.PI / Yome.sideCount(st)
+Yome.sliceTheta = (st) => 2 * Math.PI / Yome.sideCount(st)
 
-Yome.sliceDeg = st => 360 / Yome.sideCount(st)
+Yome.sliceDeg = (st) => 360 / Yome.sideCount(st)
 
 Yome.rotate = (theta, point) => {
   const sint = Math.sin(theta), cost = Math.cos(theta);
@@ -37,11 +37,11 @@ Yome.rotate = (theta, point) => {
 Yome.radialPoint = (radius, theta) =>
   Yome.rotate(theta, {x: 0, y: radius})
 
-Yome.sidePoints = st =>
+Yome.sidePoints = (st) =>
   st.sides.map((_,i) => Yome.radialPoint(180, i * Yome.sliceTheta(st)))
 
-Yome.pointsToPointsString = points =>
-  points.map(p => `${p.x},${p.y}`).join(" ")
+Yome.pointsToPointsString = (points) =>
+  points.map(p => p.x + "," + p.y).join(" ")
 
 Yome.polygon = points =>
   <polygon points={ Yome.pointsToPointsString(points) }></polygon>
@@ -49,7 +49,7 @@ Yome.polygon = points =>
 Yome.eventHandler = (f) =>
   (e => {e.preventDefault(); f(e.target.value); Yome.render()})
 
-Yome.sideCountChange = (st)=>
+Yome.changeSideCount = (st)=>
   (new_count) => {
     let nArray = Array.apply(null, Array(parseInt(new_count)));
     st.sides = nArray.map((_,i) => st.sides[i] || {});
@@ -61,8 +61,8 @@ Yome.sideOptions = () =>
 
 Yome.sideCountInput = st => 
   <div className="form-control">
-    <div>Number of Sides</div>
-    <select onChange={ Yome.eventHandler(Yome.sideCountChange(st)) }
+    <label>Size of Yome </label>
+    <select onChange={ Yome.eventHandler(Yome.changeSideCount(st)) }
               value={ Yome.sideCount(st) }>
       { Yome.sideOptions() } 
     </select> 
