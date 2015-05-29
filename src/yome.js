@@ -22,8 +22,6 @@ var Yome = Yome || {};
 
 Yome.initialState = { sides: [1,2,3,4,5,6,7,8].map(function(x) {return {}})}
 
-Yome.state = Yome.state || Yome.initialState;
-
 Yome.sideCount = st => st.sides.length
 
 Yome.sliceTheta = st => 2 * Math.PI / Yome.sideCount(st)
@@ -58,10 +56,11 @@ Yome.polygon = points =>
 Yome.eventHandler = (f) =>
   (e => {e.preventDefault(); f(e.target.value); Yome.render()})
 
-Yome.sideCountChange = (new_count) => {
-  let nArray = Array.apply(null, Array(parseInt(new_count)));
-  Yome.state.sides = nArray.map((_,i) => Yome.state.sides[i] || {});
-}
+Yome.sideCountChange = (st)=>
+  (new_count) => {
+    let nArray = Array.apply(null, Array(parseInt(new_count)));
+    st.sides = nArray.map((_,i) => st.sides[i] || {});
+  }
 
 Yome.sideOptions = () =>
   ["HexaYome", "SeptaYome","OctaYome"].map(
@@ -70,7 +69,7 @@ Yome.sideOptions = () =>
 Yome.sideCountInput = st => 
   <div className="form-control">
     <div>Number of Sides</div>
-      <select onChange={ Yome.eventHandler(Yome.sideCountChange) }
+    <select onChange={ Yome.eventHandler(Yome.sideCountChange(st)) }
               value={ Yome.sideCount(st) }>
       { Yome.sideOptions()} 
     </select> 
@@ -107,8 +106,8 @@ Yome.drawDoor = (st) =>
 Yome.drawStoveVent = (st) => {
   const theta = Yome.sliceTheta(st),
         point = Yome.radialPoint(155, 0);
-  return <ellipse key="stove-vent"
-                  cx={point.x} cy={point.y} rx="14" ry="8"></ellipse>
+  return <ellipse cx={point.x} cy={point.y} rx="14" ry="8"
+                  key="stove-vent"></ellipse>
 }
 
 Yome.drawLine = (line) =>
@@ -141,18 +140,19 @@ Yome.sideSlice = (st, side, i) => {
   </g>
 }
 
-// window controls
+// handling the corner controls
+
+Yome.worldPosition = (point) => {return { x: point.x + 250, y: point.y + 250};}
 
 // SIDE-EFFECT
 Yome.addRemoveWindow = (side, i) =>
-  (_) => Yome.state.sides[i].window = (!side.window ? "window" : null);
+  (_) => side.window = (!side.window ? "window" : null);
 
 Yome.windowControl = (st, side, i) => {
   let theta = Yome.sliceTheta(st) * (i + 1),
-      pos   = Yome.radialPoint(200, theta),
+      pos   = Yome.worldPosition(Yome.radialPoint(200, theta)),
       add   = !side.window;
-  return <div className="control-holder"
-              style={{ top: pos.y + 250, left: pos.x + 250}}>
+  return <div className="control-holder" style={{ top: pos.y, left: pos.x}}>
       <a className={ "window-control-offset " + (add ? "add" : "remove")}
          onClick={ Yome.eventHandler(Yome.addRemoveWindow(side, i)) } href="#">
          { add ? "+ window" : "- window" }
@@ -173,8 +173,7 @@ Yome.addRemoveCornerItem = (type, side) =>
 
 Yome.cornerControlLink = (type, side) =>
   <a className={Yome.cornerControlStateClass(type, side.corner)}
-     key={ type }
-     href="#" 
+     key={ type } href="#" 
      onClick={Yome.eventHandler(Yome.addRemoveCornerItem(type, side))}>
       { (side.corner ? "- " : "+ ") + type }
   </a>
@@ -185,9 +184,8 @@ Yome.cornerControlLinks = (side, i) =>
                                                
 Yome.cornerControl = (st, side, i) => {
   let theta = Yome.sliceTheta(st) * (i + 0.5),
-      pos   = Yome.radialPoint(225, theta);
-  return <div className="control-holder"
-              style={{ top: pos.y + 250, left: pos.x + 250 }}>
+      pos   = Yome.worldPosition(Yome.radialPoint(221, theta));
+  return <div className="control-holder" style={{ top: pos.y, left: pos.x }}>
       <div className="corner-control-offset">
         { Yome.cornerControlLinks(side, i) }
       </div>
@@ -203,22 +201,23 @@ Yome.yomeControls = (st) =>
     { Yome.cornerControls(st) }
   </div>
 
-
 Yome.widget = function(st) {
   return <div className="yome-widget">
     { Yome.sideCountInput(st) }
     <div className="yome-widget-body">
-    { Yome.yomeControls(st) }
-    <svg height="500" width="500" viewBox="-250 -250 500 500"
-      preserveAspectRatio="xMidYMid meet">
-      <g transform={ `rotate(${Yome.sliceDeg(st) / 2},0,0)` }>
-        { Yome.polygon(Yome.sidePoints(st)) }
-        <g>{ st.sides.map((side, i) => Yome.sideSlice(st,side,i)) }</g>
-      </g>
+      { Yome.yomeControls(st) }
+      <svg height="500" width="500" viewBox="-250 -250 500 500"
+           preserveAspectRatio="xMidYMid meet">
+        <g transform={ `rotate(${Yome.sliceDeg(st) / 2},0,0)` }>
+          { Yome.polygon(Yome.sidePoints(st)) }
+          { st.sides.map((side, i) => Yome.sideSlice(st,side,i)) }
+        </g>
     </svg>
     </div>
   </div>;
 };
+
+Yome.state = Yome.state || Yome.initialState;
 
 Yome.render =
   () => React.render(Yome.widget(Yome.state),
