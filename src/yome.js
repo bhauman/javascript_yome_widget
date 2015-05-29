@@ -37,13 +37,6 @@ Yome.rotate = (theta, point) => {
 Yome.radialPoint = (radius, theta) =>
   Yome.rotate(theta, {x: 0, y: radius})
 
-// dont' actually need this yet
-Yome.radialLine = function(radius, start_theta, end_theta) {
-  var start_p = Yome.radialPoint(radius, start_theta);
-  var end_p =   Yome.radialPoint(radius, end_theta);
-  return <line x1={start_p.x} y1={start_p.y} x2={end_p.x} y2={end_p.y}></line>;
-}
-
 Yome.sidePoints = st =>
   st.sides.map((_,i) => Yome.radialPoint(180, i * Yome.sliceTheta(st)))
 
@@ -71,7 +64,7 @@ Yome.sideCountInput = st =>
     <div>Number of Sides</div>
     <select onChange={ Yome.eventHandler(Yome.sideCountChange(st)) }
               value={ Yome.sideCount(st) }>
-      { Yome.sideOptions()} 
+      { Yome.sideOptions() } 
     </select> 
   </div>
 
@@ -135,7 +128,7 @@ Yome.itemRender = {
 
 Yome.sideSlice = (st, side, i) => {
   return <g transform={ `rotate(${ Yome.sliceDeg(st) * i },0,0)` }>
-    { [side.window, side.corner].filter(x => x)
+    { [side.face, side.corner].filter(x => x)
          .map(type => Yome.itemRender[ type ](st)) }
   </g>
 }
@@ -146,12 +139,12 @@ Yome.worldPosition = (point) => {return { x: point.x + 250, y: point.y + 250};}
 
 // SIDE-EFFECT
 Yome.addRemoveWindow = (side, i) =>
-  (_) => side.window = (!side.window ? "window" : null);
+  (_) => side.face = (!side.face ? "window" : null);
 
 Yome.windowControl = (st, side, i) => {
   let theta = Yome.sliceTheta(st) * (i + 1),
       pos   = Yome.worldPosition(Yome.radialPoint(200, theta)),
-      add   = !side.window;
+      add   = !side.face;
   return <div className="control-holder" style={{ top: pos.y, left: pos.x}}>
       <a className={ "window-control-offset " + (add ? "add" : "remove")}
          onClick={ Yome.eventHandler(Yome.addRemoveWindow(side, i)) } href="#">
@@ -165,11 +158,12 @@ Yome.windowControls = (st) =>
 
 // corner control
 
-Yome.cornerControlStateClass = (type, corner_type) => 
-  ((! corner_type) && "add") || ((corner_type == type) && "remove") || "hidden"
-
+// SIDE EFFECT
 Yome.addRemoveCornerItem = (type, side) =>
   (_) => side.corner = (side.corner ? null : type)
+
+Yome.cornerControlStateClass = (type, corner_type) => 
+  ((! corner_type) && "add") || ((corner_type == type) && "remove") || "hidden"
 
 Yome.cornerControlLink = (type, side) =>
   <a className={Yome.cornerControlStateClass(type, side.corner)}
@@ -201,8 +195,8 @@ Yome.yomeControls = (st) =>
     { Yome.cornerControls(st) }
   </div>
 
-Yome.widget = function(st) {
-  return <div className="yome-widget">
+Yome.widget = (st) =>
+  <div className="yome-widget">
     { Yome.sideCountInput(st) }
     <div className="yome-widget-body">
       { Yome.yomeControls(st) }
@@ -214,8 +208,7 @@ Yome.widget = function(st) {
         </g>
     </svg>
     </div>
-  </div>;
-};
+  </div>
 
 Yome.state = Yome.state || Yome.initialState;
 
