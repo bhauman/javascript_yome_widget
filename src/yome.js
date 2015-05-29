@@ -87,7 +87,8 @@ Yome.windowPoints = (st) => {
 }
 
 Yome.drawWindow = (st) =>
-  <polygon points={ Yome.pointsToPointsString(Yome.windowPoints(st)) }></polygon>
+  <polygon points={ Yome.pointsToPointsString(Yome.windowPoints(st)) }
+           key="window"></polygon>
 
 // draw door
 
@@ -100,18 +101,14 @@ Yome.doorPoints = (st) => {
 }
 
 Yome.drawDoor = (st) =>
-  <polygon points={ Yome.pointsToPointsString(Yome.doorPoints(st)) }></polygon>
+  <polygon points={ Yome.pointsToPointsString(Yome.doorPoints(st)) }
+           key="door-frame"></polygon>
 
 Yome.drawStoveVent = (st) => {
   const theta = Yome.sliceTheta(st),
         point = Yome.radialPoint(155, 0);
-  return <ellipse cx={point.x} cy={point.y} rx="14" ry="8"></ellipse>
-}
-
-Yome.drawStoveVent = (st) => {
-  const theta = Yome.sliceTheta(st),
-        point = Yome.radialPoint(155, 0);
-  return <ellipse cx={point.x} cy={point.y} rx="14" ry="8"></ellipse>
+  return <ellipse key="stove-vent"
+                  cx={point.x} cy={point.y} rx="14" ry="8"></ellipse>
 }
 
 Yome.drawLine = (line) =>
@@ -176,6 +173,7 @@ Yome.addRemoveCornerItem = (type, side) =>
 
 Yome.cornerControlLink = (type, side) =>
   <a className={Yome.cornerControlStateClass(type, side.corner)}
+     key={ type }
      href="#" 
      onClick={Yome.eventHandler(Yome.addRemoveCornerItem(type, side))}>
       { (side.corner ? "- " : "+ ") + type }

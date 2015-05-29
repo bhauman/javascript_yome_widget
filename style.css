@@ -33,7 +33,7 @@ a {
     font-size: 12px;
 }
 
-a.remove { color: red;}
+a.remove { color: rgb(239, 131, 75);}
 a.hidden { visibility: hidden;}
 
 @-webkit-keyframes appear {
