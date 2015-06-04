@@ -31,6 +31,7 @@ a {
     text-decoration: none;
     display: block;
     font-size: 12px;
+    white-space: nowrap;
 }
 
 a.remove { color: rgb(239, 131, 75);}
