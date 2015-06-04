@@ -1,4 +1,4 @@
-# Functional JavaScript with React Yome Widget
+# Functional React Yome Widget
 
 I wrote this widget to demonstrate how to write straightforward
 functional code with [React.js](https://facebook.github.io/react/).
