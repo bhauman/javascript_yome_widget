@@ -24,7 +24,7 @@ Yome.initialState = () => {
   return { sides: [1,2,3,4,5,6,7,8].map( () => new Object() ) }
 }
 
-Yome.state = Yome.state || Yome.initialState();
+// Yome.state = Yome.state || Yome.initialState();
 //l(Yome.state)
 
 Yome.sideCount = (st) => st.sides.length
@@ -32,7 +32,6 @@ Yome.sideCount = (st) => st.sides.length
 
 Yome.sliceTheta = (st) => 2 * Math.PI / Yome.sideCount(st)
 //l(Yome.sliceTheta(Yome.state))
-
 
 Yome.rotate = (theta, point) => {
   const sint = Math.sin(theta), cost = Math.cos(theta);
@@ -183,14 +182,16 @@ Yome.drawYome = (st) =>
 //Yome.clearPlayArea()
 
 //side effecting
-Yome.eventHandler = (f) =>
-  (e => {e.preventDefault(); f(e.target.value); Yome.render()})
+Yome.prevent = (f) =>
+  (e => {e.preventDefault(); f(e.target.value);})
 
 //side effecting
-Yome.changeSideCount = (new_count) => {
+Yome.changeSideCount = (state) =>
+  (new_count) => {
     let nArray = Array.apply(null, Array(parseInt(new_count)));
-    Yome.state.sides = nArray.map((_,i) => Yome.state.sides[i] || {});
-}
+    state.changeState((st) => st.sides = nArray.map((_,i) => st.sides[i] || {}))
+  }
+
 //Yome.changeSideCount(6)
 //Yome.changeSideCount(7)
 //Yome.changeSideCount(8)
@@ -202,7 +203,7 @@ Yome.sideOptions = () =>
 Yome.sideCountInput = st => 
   <div className="top-control">
     <span> Size of Yome </span>
-    <select onChange={ Yome.eventHandler(Yome.changeSideCount) }
+    <select onChange={ Yome.prevent(Yome.changeSideCount(st)) }
             value={ Yome.sideCount(st) }>
       { Yome.sideOptions() } 
     </select> 
@@ -213,10 +214,13 @@ Yome.sideCountInput = st =>
 
 Yome.worldPosition = (point) => ({ x: point.x + 250, y: point.y + 250})
 
-Yome.addRemoveWindow = (i) =>
+Yome.addRemoveWindow = (state, i) =>
   (_) => {
-    const side = Yome.state.sides[i];
-    side.face = (!side.face ? "window" : null);    
+    state.changeState(
+      (st) => {
+        const side = st.sides[i];
+        side.face = (!side.face ? "window" : null);    
+      })
   }
 
 Yome.windowControl = (st, side, i) => {
@@ -227,7 +231,7 @@ Yome.windowControl = (st, side, i) => {
                                                    left: pos.x } }>
     <a className={ "window-control-offset " +
                    (add ? "add" : "remove")}
-       onClick={ Yome.eventHandler(Yome.addRemoveWindow(i)) }
+       onClick={ Yome.prevent(Yome.addRemoveWindow(st, i)) }
        href="#">
        { add ? "+ window" : "- window" }
     </a>
@@ -240,35 +244,51 @@ Yome.windowControls = (st) =>
 // --- Corner Controls
 
 // SIDE EFFECT
-Yome.addRemoveCornerItem = (type, side) =>
-  (_) => side.corner = (side.corner ? null : type)
+Yome.addRemoveCornerItem = (state, type, i) =>
+  (_) =>
+    state.changeState(st => {
+      st.sides[i].corner = (st.sides[i].corner ? null : type)                   
+    })
 
 Yome.cornerControlStateClass = (type, corner_type) => 
   ((! corner_type) && "add") || ((corner_type == type) && "remove") || "hidden"
 
-Yome.cornerControlLink = (type, side) =>
-  <a className={Yome.cornerControlStateClass(type, side.corner)}
+Yome.cornerControlLink = (state, type, i) => {
+  const side = state.sides[i];
+  return <a className={Yome.cornerControlStateClass(type, side.corner)}
      key={ type } href="#" 
-     onClick={Yome.eventHandler(Yome.addRemoveCornerItem(type, side))}>
+     onClick={ Yome.prevent(Yome.addRemoveCornerItem(state, type, i)) }>
       { (side.corner ? "- " : "+ ") + type }
   </a>
+}
 
-Yome.cornerControlLinks = (side, i) =>
+Yome.cornerControlLinks = (state, i) =>
   ["stove-vent", "zip-door", "door-frame"].map(
-    (t) => Yome.cornerControlLink(t, side))
+    (t) => Yome.cornerControlLink(state, t, i))
                                                
-Yome.cornerControl = (st, side, i) => {
-  let theta = Yome.sliceTheta(st) * (i + 0.5),
+Yome.cornerControl = (st, i) => {
+  let side = st.sides[i],
+      theta = Yome.sliceTheta(st) * (i + 0.5),
       pos   = Yome.worldPosition(Yome.radialPoint(221, theta));
   return <div className="control-holder" style={{ top: pos.y, left: pos.x }}>
       <div className="corner-control-offset">
-        { Yome.cornerControlLinks(side, i) }
+      { Yome.cornerControlLinks(st, i) }
       </div>
     </div>
 }
 
+Yome.StateHolder = function(sides, renderFunc) {
+  this.sides = sides;
+  this.__render = renderFunc;
+}
+
+Yome.StateHolder.prototype.changeState = function(f) {
+  f(this);
+  this.__render()
+}
+
 Yome.cornerControls = (st) =>
-  st.sides.map((side, i) => Yome.cornerControl(st, side, i))
+  st.sides.map((_, i) => Yome.cornerControl(st, i))
 
 // --- Add new code above this line ---
 
@@ -282,7 +302,8 @@ Yome.widget = (st) =>
     </div>
   </div>
 
-Yome.render = () =>
-  React.render(Yome.widget(Yome.state), document.getElementById('app'))
+Yome.state = Yome.state ||
+  new Yome.StateHolder(Yome.initialState().sides,
+                       () => { React.render(Yome.widget(Yome.state), document.getElementById('app'))} );
 
-Yome.render();
+Yome.state.__render()
